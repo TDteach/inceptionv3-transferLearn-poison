@@ -37,8 +37,12 @@ def load_images_from_directory(Specie, directory):
     """
     res = []
     for file in listdir(directory):
-        thisOne = imageio.imread(directory+file)
-        res.append(thisOne)
+        try:
+            thisOne = imageio.imread(directory+file)
+            print(directory+file)
+            res.append(thisOne)
+        except:
+            pass
     res = np.array(res)
     print('Done loading %d %s\'s !'%(len(res),Specie))
     return res
@@ -59,10 +63,10 @@ def clean_data(X):
 
     indices = []
     for i,d in enumerate(X):
-        if d.ndim !=3:
+        if (d.ndim !=3) or (d.shape[2] != 3):
             indices.append(i)
             print('removing index %d with shape:'%i,d.shape)
-    
+
     if len(indices) > 0:
         newX = np.delete(X,indices)
     else:
@@ -85,6 +89,7 @@ def create_graph(graphDir=None):
     return sess.graph
 
 def get_feat_reps(X,class_t):
+    print(X.shape)
     """
     Returns the feature representation of some images by looking at the penultimate layer of inception-v3
     Parameters
@@ -148,7 +153,7 @@ def id_duplicates_of_training_from_test(X_test,X_training, threshold = 3.5):
         # print distsToTargs
         report_inds = np.argwhere(distsToTargs <= threshold)
         if len(report_inds) > 0:
-            print report_inds
+            print(report_inds)
             print(distsToTargs[0][report_inds])
         if len(np.argwhere(distsToTargs == 0.)) > 0:
             list_ind.append(i)
@@ -156,7 +161,7 @@ def id_duplicates_of_training_from_test(X_test,X_training, threshold = 3.5):
     return list_ind
 
 
-def load_bottleNeckTensor_data(directory=None, saveEm=False, random_state=123, train_size=900):
+def load_bottleNeckTensor_data(directory=None, saveEm=False, random_state=123, train_size=700):
     """
     Returns the train-test splits of images and their feature representations.
     Parameters
@@ -175,8 +180,8 @@ def load_bottleNeckTensor_data(directory=None, saveEm=False, random_state=123, t
     X_tr_feats, X_tst_feats, X_tr_inp, X_tst_inp, Y_tr, Y_tst : ndarray
         Arrays used for training.
     """
-    #some parameters 
-    directorySaving = './Data/XY/' #directory to save the X and Ys
+    #some parameters
+    directorySaving = '/home/tdteach/data/dogfish/XY/' #directory to save the X and Ys
     allDogs = 'dogInput.npy'
     allFishes  = 'fishInput.npy'
     dog_X_feats = 'dogFeats.npy'
@@ -187,20 +192,20 @@ def load_bottleNeckTensor_data(directory=None, saveEm=False, random_state=123, t
         allDogs = directory + allDogs
         allFishes = directory + allFishes
 
-    
+
     #load the data
     dog_x_feats = np.load(dog_X_feats)
     fish_x_feats = np.load(fish_X_feats)
     allFishes = np.load(allFishes)
     allDogs = np.load(allDogs)
-    
+
     #do train and test split number of training dogs and number of training fishes = 800 from each class
     x_d_tr, x_d_tst, y_d_tr, y_d_tst, inp_d_tr, inp_d_tst = train_test_split(dog_x_feats, np.zeros(len(dog_x_feats)), allDogs ,train_size=train_size, random_state=random_state)
     x_f_tr, x_f_tst, y_f_tr, y_f_tst, inp_f_tr, inp_f_tst = train_test_split(fish_x_feats, np.ones(len(fish_x_feats)),allFishes, train_size=train_size, random_state=random_state)
-    
+
     assert len(x_d_tr) + len(x_d_tst) == len(dog_x_feats), "There is some issue with the spliting"
     assert len(inp_d_tr) + len(inp_d_tst) == len(dog_x_feats), "There's issues with splitting of the input images - maybe there is an issue with the raw images"
-    
+
     #concatenate all of the X's
     X_tr_feats = np.squeeze(np.concatenate((x_d_tr, x_f_tr), axis=0))
     X_tst_feats = np.squeeze(np.concatenate((x_d_tst, x_f_tst), axis=0))
@@ -212,7 +217,7 @@ def load_bottleNeckTensor_data(directory=None, saveEm=False, random_state=123, t
 
     #remove the duplicates of the test data which are already present in the training data
     ids_for_test_removal = id_duplicates_of_training_from_test(X_test=X_tst_feats,X_training=X_tr_feats, threshold = 3.5)
-    print ids_for_test_removal
+    print(ids_for_test_removal)
     #sort the ids in descending order
     ids_for_test_removal.sort(reverse=True)
     for k in ids_for_test_removal:
@@ -220,14 +225,14 @@ def load_bottleNeckTensor_data(directory=None, saveEm=False, random_state=123, t
         X_tst_inp = np.delete(X_tst_inp,k,axis=0)
         Y_tst = np.delete(Y_tst,k,axis=0)
 
-    
+
     all_datas = ['X_tr_feats', 'X_tst_feats', 'X_tr_inp', 'X_tst_inp', 'Y_tr', 'Y_tst']
     if saveEm:
         if not os.path.exists(directorySaving):
             os.makedirs(directorySaving)
         for d in all_datas:
             np.save(directorySaving+d+'.npy',eval(d))
-    
+
     return X_tr_feats, X_tst_feats, X_tr_inp, X_tst_inp, Y_tr, Y_tst
 
 def adam_one_step(sess,grad_op,m,v,t,currentImage,featRepTarget,tarFeatRepPL,inputCastImgTensor,learning_rate,beta_1=0.9, beta_2=0.999, eps=1e-8):
@@ -268,12 +273,12 @@ def do_optimization(targetImg, baseImg, MaxIter=200,coeffSimInp=0.25, saveInteri
     MaxIter : integer
         this is the maximum number of fwd backward iterations
     coeffSimInp : flaot
-        the coefficient of similarity to the base image in input image space relative to the 
+        the coefficient of similarity to the base image in input image space relative to the
         similarity to the feature representation of the target when everything is normalized
         the objective function of the optimization is:
                 || f(x)-f(t) ||^2 + coeffSimInp * || x-b ||^2
     objThreshold: float
-        the threshold for the objective functoin, when the obj func falls below this, the 
+        the threshold for the objective functoin, when the obj func falls below this, the
         optimization is stopped even if the MaxIter is not met.
     Returns
     -------
@@ -344,10 +349,10 @@ def do_optimization(targetImg, baseImg, MaxIter=200,coeffSimInp=0.25, saveInteri
             new_image,m,v,t = adam_one_step(sess=sess,grad_op=grad_op,m=m,v=v,t=t,currentImage=old_image,featRepTarget=targetFeatRep,tarFeatRepPL=tarFeatRepPL,inputCastImgTensor=inputCastImgTensor,learning_rate=learning_rate)
         else:
             new_image = do_forward(sess=sess,grad_op=grad_op,inputCastImgTensor=inputCastImgTensor, currentImage=old_image,featRepCurrentImage=old_featRep,featRepTarget=targetFeatRep,tarFeatRepPL=tarFeatRepPL,learning_rate=learning_rate)
-        
+
         # The backward step in the forward-backward iteration
         new_image = do_backward(baseInpImage=baseImg,currentImage=new_image,coeff_sim_inp=coeff_sim_inp,learning_rate=learning_rate,eps=0.1)
-        
+
         # check stopping condition:  compute relative change in image between iterations
         rel_change_val =  np.linalg.norm(new_image-old_image)/np.linalg.norm(new_image)
         if (rel_change_val<stopping_tol) or (old_obj<=objThreshold):
@@ -356,7 +361,7 @@ def do_optimization(targetImg, baseImg, MaxIter=200,coeffSimInp=0.25, saveInteri
         # compute new objective value
         new_featRep = sess.run(featRepTensor, feed_dict={inputCastImgTensor: new_image})
         new_obj = np.linalg.norm(new_featRep - targetFeatRep) + coeff_sim_inp*np.linalg.norm(new_image - baseImg)
-        
+
         if Adam:
             learning_rate = 0.1*255.
             old_image = new_image
@@ -373,7 +378,7 @@ def do_optimization(targetImg, baseImg, MaxIter=200,coeffSimInp=0.25, saveInteri
                 old_image = new_image
                 old_obj = new_obj
                 old_featRep = new_featRep
-                
+
             if iter < M-1:
                 last_M_objs.append(new_obj)
             else:
@@ -419,16 +424,16 @@ def closest_to_target_from_class(classBase,targetFeatRep,allTestFeatReps, allTes
     if allTestFeatReps.ndim > 2: #if needed, squeeze the feat rep
         allTestFeatReps = np.squeeze(allTestFeatReps)
     assert allTestFeatReps.ndim == 2, 'the feat rep matrix should have 2 dimensions it has %d dimensions...'%allTestFeatReps.ndim
-    
+
     possible_indices = np.argwhere(allTestClass == classBase)
     featRepCandidantes = np.squeeze(allTestFeatReps[possible_indices])
-    
+
     #calculate distance from the target to the candidates:
     print(featRepCandidantes.ndim,targetFeatRep.ndim)
     Dists = cdist(featRepCandidantes,np.expand_dims(targetFeatRep,axis=0))
     min_ind = Dists.argmin()
     print('distance from base to target in feat space:',Dists[min_ind])
-    
+
     return possible_indices[min_ind][0]
 
 
@@ -463,7 +468,7 @@ def train_last_layer_of_inception(targetFeatRep,poisonInpImage,poisonClass,X_tr,
         similar to X_tr but contatining the test data
     cold: Boolean
         if True, the evaluation will be based using cold start and not pretrained weights.
-        if False, the evaluation would be using warm start. It starts from a set of weights that are pretrained.    
+        if False, the evaluation would be using warm start. It starts from a set of weights that are pretrained.
 
     Returns
     -------
@@ -478,7 +483,7 @@ def train_last_layer_of_inception(targetFeatRep,poisonInpImage,poisonClass,X_tr,
     classes = ['dog','fish']
     how_many_training_steps = 10000
     eval_step_interval = 100
-    
+
     #fixing target shapes
     Y_target = np.ones((1,2))
     Y_target[0,int(poisonClass)] = 0.
@@ -486,14 +491,14 @@ def train_last_layer_of_inception(targetFeatRep,poisonInpImage,poisonClass,X_tr,
     Y_poison[0,int(poisonClass)] = 1.
     targetFeatRep = targetFeatRep.reshape(1,len(targetFeatRep))
     print("Y_target is:",Y_target)
-    
+
     #do initializations
     tf.reset_default_graph()                                    #reset the default graph to free up memory
     sess = tf.Session()                                         #get session
     random_permutation = np.arange(len(X_tr)+1)                 #for training - we add one to the number of training data to account for the poison
-    
+
     #based on whether we are doing cold start or warm start, load the appropriate graph
-    if cold: 
+    if cold:
         saver = tf.train.import_meta_graph('./dog_v_fish_cold_graph/dog_v_fish_cold_graph.meta')
         saver.restore(sess,tf.train.latest_checkpoint('./dog_v_fish_cold_graph/'))
         reportWeightChanges = False
@@ -501,14 +506,14 @@ def train_last_layer_of_inception(targetFeatRep,poisonInpImage,poisonClass,X_tr,
         saver = tf.train.import_meta_graph('./dog_v_fish_hot_graph/dog_v_fish_hot_graph.meta')
         saver.restore(sess, tf.train.latest_checkpoint('./dog_v_fish_hot_graph/'))
         reportWeightChanges = True
- 
+
     graph = tf.get_default_graph()
-    
+
     #getting feature representation of the poison - we need to get this first before adding it to the training data
     feat_tensor = sess.graph.get_tensor_by_name('pool_3:0')
     input_tensor = sess.graph.get_tensor_by_name('DecodeJpeg:0')#'Cast:0')
     poisonFeatRep = np.expand_dims(np.squeeze(sess.run(feat_tensor, feed_dict={input_tensor: poisonInpImage})), axis=0)
-    
+
     #append the training data and add the poison to the end of it
     X_tr = np.vstack((X_tr,poisonFeatRep))
     Y_tr = np.append(Y_tr,poisonClass)
@@ -552,7 +557,7 @@ def train_last_layer_of_inception(targetFeatRep,poisonInpImage,poisonClass,X_tr,
         y_one_hot_validation = encode_one_hot(len(classes), Y_validation)
         shuffledX = X_tr[shuffledRange,:]
         shuffledY = y_one_hot_train[shuffledRange]
-        
+
         for Xi, Yi in iterate_mini_batches(shuffledX, shuffledY, mini_batch_size):
             sess.run(train_step, feed_dict={X_Bottleneck: Xi, Y_true: Yi})
             # Every so often, print out how well the graph is training.
@@ -574,7 +579,7 @@ def train_last_layer_of_inception(targetFeatRep,poisonInpImage,poisonClass,X_tr,
 
     poison_class_probs = sess.run(class_probs,feed_dict={X_Bottleneck:poisonFeatRep, Y_true:Y_poison})
     poison_corr_pred = sess.run(correct_prediction, feed_dict={X_Bottleneck:poisonFeatRep, Y_true:Y_poison})
-    
+
 
     print('The target is now classified correctly:',target_corr_pred,'class probs:',target_class_probs)
     print('The poison is now classified correctly:',poison_corr_pred,'class probs:',poison_class_probs)
