@@ -199,7 +199,10 @@ def load_bottleNeckTensor_data(directory=None, saveEm=False, random_state=123, t
     allFishes = np.load(allFishes)
     allDogs = np.load(allDogs)
 
-    #do train and test split number of training dogs and number of training fishes = 800 from each class
+    #do train and test split number of training dogs and number of training fishes from each class
+    #x_d_tr + x_d_tst = dog_x_feat
+    #y_d_tr + y_d_tst = zeros(len(dog_x_feats))
+    #inp_d_tr + inp_d_tst = allDogs
     x_d_tr, x_d_tst, y_d_tr, y_d_tst, inp_d_tr, inp_d_tst = train_test_split(dog_x_feats, np.zeros(len(dog_x_feats)), allDogs ,train_size=train_size, random_state=random_state)
     x_f_tr, x_f_tst, y_f_tr, y_f_tst, inp_f_tr, inp_f_tst = train_test_split(fish_x_feats, np.ones(len(fish_x_feats)),allFishes, train_size=train_size, random_state=random_state)
 

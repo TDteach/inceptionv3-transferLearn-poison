@@ -19,7 +19,7 @@ classes = ['dog', 'fish']
 
 
 #load the training and test data
-directorySaving = './Data/XY/'
+directorySaving = '/home/tdteach/data/dogfish/XY/'
 all_datas = ['X_tr_feats', 'X_tst_feats', 'X_tr_inp', 'X_tst_inp', 'Y_tr', 'Y_tst']
 X_tr = np.load(directorySaving+all_datas[0]+'.npy')
 X_test = np.load(directorySaving+all_datas[1]+'.npy')
@@ -81,7 +81,7 @@ def iterate_mini_batches(X_input,Y_input,batch_size):
 
 def encode_one_hot(nclasses,y):
     return np.eye(nclasses)[y.astype(int)]
-        
+
 def do_train(sess,saver,X_input, Y_input, X_validation, Y_validation):
     mini_batch_size = 10
     n_train = X_input.shape[0]
@@ -117,7 +117,7 @@ def do_train(sess,saver,X_input, Y_input, X_validation, Y_validation):
     y_one_hot_validation = encode_one_hot(len(classes), Y_validation)
     print("test acc:",sess.run(evaluation_step, feed_dict={X_Bottleneck: X_validation, Y_true: y_one_hot_validation}))
     return sess
-    
+
 
 
 import tensorflow as tf

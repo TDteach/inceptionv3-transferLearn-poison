@@ -58,7 +58,10 @@ if firsTime:
         os.makedirs(directory)
     np.save(directory+'fishFeats.npy',fishFeats)
 
-	# load the bottleneck tensors and do the train test split and save it
+    # load the bottleneck tensors and do the train test split and save it
+    # X_tr is X_tr_feats
+    # X_test is X_tst_feats
+    # X_inp_test is X_tr_inp and also the training part of allDogs
     X_tr, X_test, X_inp_tr, X_inp_test, Y_tr, Y_test = load_bottleNeckTensor_data(directory=finalDir,saveEm=True)
 
 
@@ -87,7 +90,7 @@ allPoisons = []
 alldiffs = []
 directoryForPoisons = '/home/tdteach/data/dogfish/poisonImages/'
 if not os.path.exists(directoryForPoisons):
-	os.makedirs(directoryForPoisons)
+    os.makedirs(directoryForPoisons)
 
 for i in range(len(X_test)):
     diff = 100

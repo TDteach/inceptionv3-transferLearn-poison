@@ -22,7 +22,8 @@ import imageio
 # 	all_poisons = all_poisons[:-1]
 
 #load the data from file
-directorySaving = './Data/XY/'
+dataDir = '/home/tdteach/data/dogfish/'
+directorySaving = dataDir+'XY/'
 all_datas = ['X_tr_feats', 'X_tst_feats', 'X_tr_inp', 'X_tst_inp', 'Y_tr', 'Y_tst']
 X_tr = np.load(directorySaving+all_datas[0]+'.npy')
 X_test = np.load(directorySaving+all_datas[1]+'.npy')

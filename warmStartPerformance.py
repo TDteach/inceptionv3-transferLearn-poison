@@ -15,7 +15,7 @@ import imageio
 coldStart = False #if not cold start then it would be warm start
 
 #load the data from file
-directorySaving = './Data/XY/'
+directorySaving = '/home/tdteach/data/dogfish/XY/'
 all_datas = ['X_tr_feats', 'X_tst_feats', 'X_tr_inp', 'X_tst_inp', 'Y_tr', 'Y_tst']
 X_tr = np.load(directorySaving+all_datas[0]+'.npy')
 X_test = np.load(directorySaving+all_datas[1]+'.npy')
