@@ -89,7 +89,6 @@ def create_graph(graphDir=None):
     return sess.graph
 
 def get_feat_reps(X,class_t):
-    print(X.shape)
     """
     Returns the feature representation of some images by looking at the penultimate layer of inception-v3
     Parameters
@@ -260,6 +259,7 @@ def do_backward(baseInpImage,currentImage,coeff_sim_inp,learning_rate,eps=0.1,do
         back_res = baseInpImage + np.maximum(np.minimum(currentImage - baseInpImage,eps) ,-eps)
     else:
         back_res = (coeff_sim_inp*learning_rate*baseInpImage + currentImage)/(coeff_sim_inp*learning_rate + 1)
+
     if do_clipping:
         back_res = np.clip(back_res,0,255)
     return back_res
@@ -298,11 +298,12 @@ def do_optimization(targetImg, baseImg, MaxIter=200,coeffSimInp=0.25, saveInteri
     EveryThisNThen = 20             #for printing reports
     M = 40                          #used for getting the average of last M objective function values
     BOTTLENECK_TENSOR_NAME = 'pool_3/_reshape'
+    BOTTLENECK_TENSOR_SIZE = 2048
     INPUT_TENSOR_NAME = 'DecodeJpeg:0'
 
     #calculations for getting a reasonable value for coefficient of similarity of the input to the base image
     bI_shape = np.squeeze(baseImg).shape
-    coeff_sim_inp = coeffSimInp*(2048/float(bI_shape[0]*bI_shape[1]*bI_shape[2]))**2
+    coeff_sim_inp = coeffSimInp*(BOTTLENECK_TENSOR_SIZE/float(bI_shape[0]*bI_shape[1]*bI_shape[2]))**2
     print('coeff_sim_inp is:', coeff_sim_inp)
 
     #load the inception v3 graph
@@ -313,7 +314,7 @@ def do_optimization(targetImg, baseImg, MaxIter=200,coeffSimInp=0.25, saveInteri
     featRepTensor = graph.get_tensor_by_name(BOTTLENECK_TENSOR_NAME+':0')
     inputImgTensor = sess.graph.get_tensor_by_name(INPUT_TENSOR_NAME)
     inputCastImgTensor = graph.get_tensor_by_name('Cast:0')#'ResizeBilinear:0')
-    tarFeatRepPL = tf.placeholder(tf.float32,[None,2048])
+    tarFeatRepPL = tf.placeholder(tf.float32,[None,BOTTLENECK_TENSOR_SIZE])
     forward_loss = tf.norm(featRepTensor - tarFeatRepPL)
     grad_op = tf.gradients(forward_loss, inputCastImgTensor)
 
@@ -433,7 +434,9 @@ def closest_to_target_from_class(classBase,targetFeatRep,allTestFeatReps, allTes
 
     #calculate distance from the target to the candidates:
     print(featRepCandidantes.ndim,targetFeatRep.ndim)
-    Dists = cdist(featRepCandidantes,np.expand_dims(targetFeatRep,axis=0))
+    while targetFeatRep.ndim < featRepCandidantes.ndim :
+        targetFeatRep = np.expand_dims(targetFeatRep, axis=0)
+    Dists = cdist(featRepCandidantes,targetFeatRep)
     min_ind = Dists.argmin()
     print('distance from base to target in feat space:',Dists[min_ind])
 

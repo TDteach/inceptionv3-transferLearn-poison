@@ -76,11 +76,6 @@ X_inp_test = np.load(directorySaving+all_datas[3]+'.npy')
 Y_tr = np.load(directorySaving+all_datas[4]+'.npy')
 Y_test = np.load(directorySaving+all_datas[5]+'.npy')
 print('done loading data i.e. the train-test split!')
-print(X_tr.shape)
-print(X_test.shape)
-print(X_inp_tr.shape)
-print(X_inp_test.shape)
-
 
 # for i,img in enumerate(X_inp_test):
 # 	misc.imsave('./forFindingBases/%d.jpeg'%i,img)
@@ -119,7 +114,7 @@ for i in range(len(X_test)):
         img, diff = do_optimization(targetImg, baseImg, MaxIter=1500,coeffSimInp=0.2, saveInterim=False, imageID=i, objThreshold=2.9)
         print('built poison for target %d with diff: %.5f'%(i,diff))
         counter += 1
-        # save the image to file and keep statistics
+    # save the image to file and keep statistics
     allPoisons.append(img)
     alldiffs.append(diff)
     name = "%d_%.5f"%(i,diff)
